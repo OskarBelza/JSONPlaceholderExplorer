@@ -108,7 +108,7 @@ tr:nth-child(even) {
 
 /* Dodatkowe style dla tabeli zdjęć */
 .photo-table img {
-  width: 100px;
+  width: 200px;
   height: auto;
   border-radius: 5px;
 }
