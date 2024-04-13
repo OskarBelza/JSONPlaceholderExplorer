@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import { NotificationContainer, NotificationManager } from 'react-notifications';
+import 'react-notifications/lib/notifications.css';
 
 function App() {
   const [posts, setPosts] = useState([]);
@@ -14,8 +16,8 @@ function App() {
   const [error, setError] = useState(null);
 
   const [postLimit, setPostLimit] = useState(10);
-  const [minCharCount, setMinCharCount] = useState(0);
-  const [maxCharCount, setMaxCharCount] = useState(1000);
+  const [minCharCount, setMinCharCount] = useState(100);
+  const [maxCharCount, setMaxCharCount] = useState(500);
 
   useEffect(() => {
     fetchPosts();
@@ -26,10 +28,16 @@ function App() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_limit=${postLimit}`);
+      const response = await fetch(`https://jsonplaceholder.typicode.com/posts-error?_limit=${postLimit}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
       const newData = await response.json();
-      setPosts(newData.filter(post => post.body.length >= minCharCount && post.body.length <= maxCharCount));
+      const filteredPosts = newData.filter(post => post.body.length >= minCharCount && post.body.length <= maxCharCount);
+      setPosts(filteredPosts);
     } catch (error) {
+      console.error("Error caught: ", error.message);
+      showErrorNotification(error.message);
       setError(error.message);
     }
   };
@@ -37,9 +45,14 @@ function App() {
   const fetchComments = async () => {
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/comments?_limit=${postLimit}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
       const newData = await response.json();
       setComments(newData);
     } catch (error) {
+      console.error("Error caught: ", error.message);
+      showErrorNotification(error.message);
       setError(error.message);
     }
   };
@@ -47,9 +60,14 @@ function App() {
   const fetchAlbums = async () => {
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/albums?_limit=${postLimit}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch albums');
+      }
       const newData = await response.json();
       setAlbums(newData);
     } catch (error) {
+      console.error("Error caught: ", error.message);
+      showErrorNotification(error.message);
       setError(error.message);
     }
   };
@@ -57,11 +75,48 @@ function App() {
   const fetchPhotos = async () => {
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=${postLimit}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch photos');
+      }
       const newData = await response.json();
       setPhotos(newData);
     } catch (error) {
+      console.error("Error caught: ", error.message);
+      showErrorNotification(error.message);
       setError(error.message);
     }
+  };
+
+  const handleFetchPosts = async () => {
+    setShowPosts(true);
+    setShowComments(false);
+    setShowAlbums(false);
+    setShowPhotos(false);
+    await fetchPosts();
+  };
+
+  const handleFetchComments = async () => {
+    setShowPosts(false);
+    setShowComments(true);
+    setShowAlbums(false);
+    setShowPhotos(false);
+    await fetchComments();
+  };
+
+  const handleFetchAlbums = async () => {
+    setShowPosts(false);
+    setShowComments(false);
+    setShowAlbums(true);
+    setShowPhotos(false);
+    await fetchAlbums();
+  };
+
+  const handleFetchPhotos = async () => {
+    setShowPosts(false);
+    setShowComments(false);
+    setShowAlbums(false);
+    setShowPhotos(true);
+    await fetchPhotos();
   };
 
   const handlePostLimitChange = (e) => {
@@ -74,6 +129,10 @@ function App() {
 
   const handleMaxCharCountChange = (e) => {
     setMaxCharCount(e.target.value);
+  };
+
+  const showErrorNotification = (errorMessage) => {
+    NotificationManager.error(errorMessage, 'Error', 5000);
   };
 
   return (
@@ -119,16 +178,14 @@ function App() {
             </div>
           </div>
           <div className="buttons-container">
-            <button onClick={() => setShowPosts(!showPosts)}>Display posts</button>
-            <button onClick={() => setShowComments(!showComments)}>Display comments</button>
-            <button onClick={() => setShowAlbums(!showAlbums)}>Display albums</button>
-            <button onClick={() => setShowPhotos(!showPhotos)}>Display photos</button>
+            <button onClick={handleFetchPosts}>Display posts</button>
+            <button onClick={handleFetchComments}>Display comments</button>
+            <button onClick={handleFetchAlbums}>Display albums</button>
+            <button onClick={handleFetchPhotos}>Display photos</button>
           </div>
         </header>
 
-
         <div className="content-area">
-          {error && <p>Error: {error}</p>}
           {showPosts && posts.length > 0 && (
               <div className="table-area">
                 <p>Posts:</p>
@@ -228,6 +285,7 @@ function App() {
               </div>
           )}
         </div>
+        <NotificationContainer />
       </div>
   );
 }
