@@ -13,22 +13,29 @@ function App() {
   const [showComments, setShowComments] = useState(false);
   const [showAlbums, setShowAlbums] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
-  const [error, setError] = useState(null);
 
   const [postLimit, setPostLimit] = useState(10);
   const [minCharCount, setMinCharCount] = useState(100);
   const [maxCharCount, setMaxCharCount] = useState(500);
 
   useEffect(() => {
-    fetchPosts();
-    fetchComments();
-    fetchAlbums();
-    fetchPhotos();
-  }, [postLimit, minCharCount, maxCharCount]);
+    if (showPosts) {
+      fetchPosts();
+    }
+    else if (showComments) {
+      fetchComments();
+    }
+    else if (showAlbums) {
+      fetchAlbums();
+    }
+    else if (showPhotos) {
+      fetchPhotos();
+    }
+  }, [showPosts, showComments, showAlbums, showPhotos]);
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/posts-error?_limit=${postLimit}`);
+      const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_limit=${postLimit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
       }
@@ -38,7 +45,6 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
-      setError(error.message);
     }
   };
 
@@ -53,7 +59,6 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
-      setError(error.message);
     }
   };
 
@@ -68,7 +73,6 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
-      setError(error.message);
     }
   };
 
@@ -83,7 +87,6 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
-      setError(error.message);
     }
   };
 
@@ -119,16 +122,19 @@ function App() {
     await fetchPhotos();
   };
 
-  const handlePostLimitChange = (e) => {
-    setPostLimit(e.target.value);
+  const handlePostLimitChange = async (e) => {
+    const newPostLimit = parseInt(e.target.value);
+    setPostLimit(newPostLimit);
   };
 
-  const handleMinCharCountChange = (e) => {
-    setMinCharCount(e.target.value);
+  const handleMinCharCountChange = async (e) => {
+    const newMinCharCount = parseInt(e.target.value);
+    setMinCharCount(newMinCharCount);
   };
 
-  const handleMaxCharCountChange = (e) => {
-    setMaxCharCount(e.target.value);
+  const handleMaxCharCountChange = async (e) => {
+    const newMaxCharCount = parseInt(e.target.value);
+    setMaxCharCount(newMaxCharCount);
   };
 
   const showErrorNotification = (errorMessage) => {
