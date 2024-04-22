@@ -2,80 +2,11 @@ import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
-import expect from "expect";
 
-describe('App component', () => {
+describe('App component - unit tests', () => {
   it('renders without crashing', () => {
     render(<App />);
     expect(screen.getByText('Welcome to jsonplaceholder project')).toBeInTheDocument();
-  });
-
-  describe('Data fetching', () => {
-    it('fetches posts when "Display posts" button is clicked', async () => {
-      render(<App />);
-      fireEvent.click(screen.getByText('Display posts'));
-      await screen.findByText('Posts:');
-    });
-
-    it('fetches comments when "Display comments" button is clicked', async () => {
-      render(<App />);
-      fireEvent.click(screen.getByText('Display comments'));
-      await screen.findByText('Comments:');
-    });
-
-    it('fetches albums when "Display albums" button is clicked', async () => {
-      render(<App />);
-      fireEvent.click(screen.getByText('Display albums'));
-      await screen.findByText('Albums:');
-    });
-
-    it('fetches photos when "Display photos" button is clicked', async () => {
-      render(<App />);
-      fireEvent.click(screen.getByText('Display photos'));
-      await screen.findByText('Photos:');
-    });
-  });
-
-  describe('Data display', () => {
-    it('displays posts when "Display posts" button is clicked', async () => {
-      render(<App />);
-      const displayPostsButton = screen.getByText('Display posts');
-      fireEvent.click(displayPostsButton);
-      await waitFor(() => {
-        const postsTable = screen.getAllByText('Posts:');
-        expect(postsTable.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('displays comments when "Display comments" button is clicked', async () => {
-      render(<App />);
-      const displayCommentsButton = screen.getByText('Display comments');
-      fireEvent.click(displayCommentsButton);
-      await waitFor(() => {
-        const commentsTable = screen.getAllByText('Comments:');
-        expect(commentsTable.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('displays albums when "Display albums" button is clicked', async () => {
-      render(<App />);
-      const displayAlbumsButton = screen.getByText('Display albums');
-      fireEvent.click(displayAlbumsButton);
-      await waitFor(() => {
-        const albumsTable = screen.getAllByText('Albums:');
-        expect(albumsTable.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('displays photos when "Display photos" button is clicked', async () => {
-      render(<App />);
-      const displayPhotosButton = screen.getByText('Display photos');
-      fireEvent.click(displayPhotosButton);
-      await waitFor(() => {
-        const photosTable = screen.getAllByText('Photos:');
-        expect(photosTable.length).toBeGreaterThan(0);
-      });
-    });
   });
 
   describe('Character limits', () => {
@@ -126,5 +57,67 @@ describe('App component', () => {
         expect(screen.getByText('Title 3')).toBeInTheDocument();
       });
     });
+  });
+});
+
+describe('App component - contract tests', () => {
+  beforeEach(() => {
+    jest.spyOn(global, 'fetch');
+  });
+
+  afterEach(() => {
+    global.fetch.mockRestore();
+  });
+
+  it('fetches posts when "Display posts" button is clicked', async () => {
+    const postsData = [{ id: 1, title: 'Title 1', body: 'Body 1' }];
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => postsData,
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Display posts'));
+    await screen.findByText('Posts:');
+  });
+
+  it('fetches comments when "Display comments" button is clicked', async () => {
+    const commentsData = [{ id: 1, postId: 1, name: 'Name 1', email: 'email@example.com', body: 'Body 1' }];
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => commentsData,
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Display comments'));
+    await screen.findByText('Comments:');
+  });
+
+  it('fetches albums when "Display albums" button is clicked', async () => {
+    const albumsData = [{ id: 1, userId: 1, title: 'Title 1' }];
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => albumsData,
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Display albums'));
+    await screen.findByText('Albums:');
+  });
+
+  it('fetches photos when "Display photos" button is clicked', async () => {
+    const photosData = [{ id: 1, albumId: 1, title: 'Title 1', thumbnailUrl: 'https://via.placeholder.com/150' }];
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => photosData,
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Display photos'));
+    await screen.findByText('Photos:');
   });
 });
