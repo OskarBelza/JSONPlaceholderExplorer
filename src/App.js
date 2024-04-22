@@ -192,7 +192,7 @@ function App() {
         </header>
 
         <div className="content-area">
-          {showPosts && posts.length > 0 && (
+          {showPosts && (
               <div className="table-area">
                 <p>Posts:</p>
                 <table className="post-table">
