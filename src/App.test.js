@@ -74,12 +74,16 @@ describe('App component - contract tests', () => {
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => postsData,
+      json: async () => ({ posts: postsData }),
     });
 
     render(<App />);
     fireEvent.click(screen.getByText('Display posts'));
     await screen.findByText('Posts:');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        'https://jsonplaceholder.typicode.com/posts?_limit=10'
+    );
   });
 
   it('fetches comments when "Display comments" button is clicked', async () => {
@@ -87,12 +91,16 @@ describe('App component - contract tests', () => {
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => commentsData,
+      json: async () => ({ comments: commentsData }),
     });
 
     render(<App />);
     fireEvent.click(screen.getByText('Display comments'));
     await screen.findByText('Comments:');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        'https://jsonplaceholder.typicode.com/comments?_limit=10'
+    );
   });
 
   it('fetches albums when "Display albums" button is clicked', async () => {
@@ -100,12 +108,16 @@ describe('App component - contract tests', () => {
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => albumsData,
+      json: async () => ({ albums: albumsData }),
     });
 
     render(<App />);
     fireEvent.click(screen.getByText('Display albums'));
     await screen.findByText('Albums:');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        'https://jsonplaceholder.typicode.com/albums?_limit=10'
+    );
   });
 
   it('fetches photos when "Display photos" button is clicked', async () => {
@@ -113,11 +125,16 @@ describe('App component - contract tests', () => {
 
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => photosData,
+      json: async () => ({ photos: photosData }),
     });
 
     render(<App />);
     fireEvent.click(screen.getByText('Display photos'));
     await screen.findByText('Photos:');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+        'https://jsonplaceholder.typicode.com/photos?_limit=10'
+    );
   });
 });
+
