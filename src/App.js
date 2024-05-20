@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useEffect, useState } from 'react';
+import './App.css';
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 import 'react-notifications/lib/notifications.css';
 
@@ -21,19 +21,17 @@ function App() {
   useEffect(() => {
     if (showPosts) {
       fetchPosts();
-    }
-    else if (showComments) {
+    } else if (showComments) {
       fetchComments();
-    }
-    else if (showAlbums) {
+    } else if (showAlbums) {
       fetchAlbums();
-    }
-    else if (showPhotos) {
+    } else if (showPhotos) {
       fetchPhotos();
     }
   }, [showPosts, showComments, showAlbums, showPhotos]);
 
   const fetchPosts = async () => {
+    performance.mark('fetchPosts-start');
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_limit=${postLimit}`);
       if (!response.ok) {
@@ -45,10 +43,19 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
+    } finally {
+      performance.mark('fetchPosts-end');
+      performance.measure('fetchPosts', 'fetchPosts-start', 'fetchPosts-end');
+      const measure = performance.getEntriesByName('fetchPosts')[0];
+      console.log(`fetchPosts took ${measure.duration}ms`);
+      performance.clearMarks('fetchPosts-start');
+      performance.clearMarks('fetchPosts-end');
+      performance.clearMeasures('fetchPosts');
     }
   };
 
   const fetchComments = async () => {
+    performance.mark('fetchComments-start');
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/comments?_limit=${postLimit}`);
       if (!response.ok) {
@@ -59,10 +66,19 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
+    } finally {
+      performance.mark('fetchComments-end');
+      performance.measure('fetchComments', 'fetchComments-start', 'fetchComments-end');
+      const measure = performance.getEntriesByName('fetchComments')[0];
+      console.log(`fetchComments took ${measure.duration}ms`);
+      performance.clearMarks('fetchComments-start');
+      performance.clearMarks('fetchComments-end');
+      performance.clearMeasures('fetchComments');
     }
   };
 
   const fetchAlbums = async () => {
+    performance.mark('fetchAlbums-start');
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/albums?_limit=${postLimit}`);
       if (!response.ok) {
@@ -73,10 +89,19 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
+    } finally {
+      performance.mark('fetchAlbums-end');
+      performance.measure('fetchAlbums', 'fetchAlbums-start', 'fetchAlbums-end');
+      const measure = performance.getEntriesByName('fetchAlbums')[0];
+      console.log(`fetchAlbums took ${measure.duration}ms`);
+      performance.clearMarks('fetchAlbums-start');
+      performance.clearMarks('fetchAlbums-end');
+      performance.clearMeasures('fetchAlbums');
     }
   };
 
   const fetchPhotos = async () => {
+    performance.mark('fetchPhotos-start');
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=${postLimit}`);
       if (!response.ok) {
@@ -87,6 +112,14 @@ function App() {
     } catch (error) {
       console.error("Error caught: ", error.message);
       showErrorNotification(error.message);
+    } finally {
+      performance.mark('fetchPhotos-end');
+      performance.measure('fetchPhotos', 'fetchPhotos-start', 'fetchPhotos-end');
+      const measure = performance.getEntriesByName('fetchPhotos')[0];
+      console.log(`fetchPhotos took ${measure.duration}ms`);
+      performance.clearMarks('fetchPhotos-start');
+      performance.clearMarks('fetchPhotos-end');
+      performance.clearMeasures('fetchPhotos');
     }
   };
 
@@ -95,7 +128,6 @@ function App() {
     setShowComments(false);
     setShowAlbums(false);
     setShowPhotos(false);
-    await fetchPosts();
   };
 
   const handleFetchComments = async () => {
@@ -103,7 +135,6 @@ function App() {
     setShowComments(true);
     setShowAlbums(false);
     setShowPhotos(false);
-    await fetchComments();
   };
 
   const handleFetchAlbums = async () => {
@@ -111,7 +142,6 @@ function App() {
     setShowComments(false);
     setShowAlbums(true);
     setShowPhotos(false);
-    await fetchAlbums();
   };
 
   const handleFetchPhotos = async () => {
@@ -119,20 +149,19 @@ function App() {
     setShowComments(false);
     setShowAlbums(false);
     setShowPhotos(true);
-    await fetchPhotos();
   };
 
-  const handlePostLimitChange = async (e) => {
+  const handlePostLimitChange = (e) => {
     const newPostLimit = parseInt(e.target.value);
     setPostLimit(newPostLimit);
   };
 
-  const handleMinCharCountChange = async (e) => {
+  const handleMinCharCountChange = (e) => {
     const newMinCharCount = parseInt(e.target.value);
     setMinCharCount(newMinCharCount);
   };
 
-  const handleMaxCharCountChange = async (e) => {
+  const handleMaxCharCountChange = (e) => {
     const newMaxCharCount = parseInt(e.target.value);
     setMaxCharCount(newMaxCharCount);
   };
@@ -140,7 +169,6 @@ function App() {
   const showErrorNotification = (errorMessage) => {
     NotificationManager.error(errorMessage, 'Error', 5000);
   };
-
   return (
       <div className="App">
         <header className="App-header">
