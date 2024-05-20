@@ -31,6 +31,7 @@ test('displays posts when "Display posts" button is clicked', () => {
   expect(postsTable).toBeInTheDocument();
 });
 
+
 test('hides posts when "Display posts" button is clicked again', () => {
   render(<App />);
   const displayPostsButton = screen.getByText(/Display posts/i);
