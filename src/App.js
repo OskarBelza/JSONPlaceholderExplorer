@@ -1,174 +1,107 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './App.css';
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 import 'react-notifications/lib/notifications.css';
 
-function App() {
+// Custom hook to fetch data from a given URL and set the state
+const useFetchData = (url, setState, options = {}) => {
+  const fetchData = async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${url.split('/').pop()}`);
+      }
+      const newData = await response.json();
+      if (options.filter) {
+        setState(options.filter(newData));
+      } else {
+        setState(newData);
+      }
+    } catch (error) {
+      console.error("Error caught: ", error.message);
+      NotificationManager.error(error.message, 'Error', 5000);
+    }
+  };
+
+  return fetchData;
+};
+
+const App = () => {
+  // State variables to store fetched data
   const [posts, setPosts] = useState([]);
   const [comments, setComments] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [photos, setPhotos] = useState([]);
 
-  const [showPosts, setShowPosts] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [showAlbums, setShowAlbums] = useState(false);
-  const [showPhotos, setShowPhotos] = useState(false);
-
+  // State variables to control the current view and filter settings
+  const [currentView, setCurrentView] = useState('');
   const [postLimit, setPostLimit] = useState(10);
   const [minCharCount, setMinCharCount] = useState(100);
   const [maxCharCount, setMaxCharCount] = useState(500);
 
-  useEffect(() => {
-    if (showPosts) {
-      fetchPosts();
-    } else if (showComments) {
-      fetchComments();
-    } else if (showAlbums) {
-      fetchAlbums();
-    } else if (showPhotos) {
-      fetchPhotos();
-    }
-  }, [showPosts, showComments, showAlbums, showPhotos]);
+  // URLs for fetching data with applied limits
+  const fetchPostsUrl = `https://jsonplaceholder.typicode.com/posts?_limit=${postLimit}`;
+  const fetchCommentsUrl = `https://jsonplaceholder.typicode.com/comments?_limit=${postLimit}`;
+  const fetchAlbumsUrl = `https://jsonplaceholder.typicode.com/albums?_limit=${postLimit}`;
+  const fetchPhotosUrl = `https://jsonplaceholder.typicode.com/photos?_limit=${postLimit}`;
 
-  const fetchPosts = async () => {
-    performance.mark('fetchPosts-start');
-    try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_limit=${postLimit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
-      }
-      const newData = await response.json();
-      const filteredPosts = newData.filter(post => post.body.length >= minCharCount && post.body.length <= maxCharCount);
-      setPosts(filteredPosts);
-    } catch (error) {
-      console.error("Error caught: ", error.message);
-      showErrorNotification(error.message);
-    } finally {
-      performance.mark('fetchPosts-end');
-      performance.measure('fetchPosts', 'fetchPosts-start', 'fetchPosts-end');
-      const measure = performance.getEntriesByName('fetchPosts')[0];
-      console.log(`fetchPosts took ${measure.duration}ms`);
-      performance.clearMarks('fetchPosts-start');
-      performance.clearMarks('fetchPosts-end');
-      performance.clearMeasures('fetchPosts');
-    }
-  };
+  // Filter function for posts based on character count
+  const postFilter = useCallback(
+      (data) => data.filter(post => post.body.length >= minCharCount && post.body.length <= maxCharCount),
+      [minCharCount, maxCharCount]
+  );
 
-  const fetchComments = async () => {
-    performance.mark('fetchComments-start');
-    try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/comments?_limit=${postLimit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      const newData = await response.json();
-      setComments(newData);
-    } catch (error) {
-      console.error("Error caught: ", error.message);
-      showErrorNotification(error.message);
-    } finally {
-      performance.mark('fetchComments-end');
-      performance.measure('fetchComments', 'fetchComments-start', 'fetchComments-end');
-      const measure = performance.getEntriesByName('fetchComments')[0];
-      console.log(`fetchComments took ${measure.duration}ms`);
-      performance.clearMarks('fetchComments-start');
-      performance.clearMarks('fetchComments-end');
-      performance.clearMeasures('fetchComments');
+  // Fetch functions for each type of data, using the custom hook
+  const fetchPosts = useFetchData(fetchPostsUrl, setPosts, { filter: postFilter });
+  const fetchComments = useFetchData(fetchCommentsUrl, setComments);
+  const fetchAlbums = useFetchData(fetchAlbumsUrl, setAlbums);
+  const fetchPhotos = useFetchData(fetchPhotosUrl, setPhotos);
+
+  // Handler for changing the current view and fetching data accordingly
+  const handleViewChange = async (view) => {
+    setCurrentView(view);
+    switch(view) {
+      case 'posts':
+        await fetchPosts();
+        break;
+      case 'comments':
+        await fetchComments();
+        break;
+      case 'albums':
+        await fetchAlbums();
+        break;
+      case 'photos':
+        await fetchPhotos();
+        break;
+      default:
+        break;
     }
   };
 
-  const fetchAlbums = async () => {
-    performance.mark('fetchAlbums-start');
-    try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/albums?_limit=${postLimit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch albums');
-      }
-      const newData = await response.json();
-      setAlbums(newData);
-    } catch (error) {
-      console.error("Error caught: ", error.message);
-      showErrorNotification(error.message);
-    } finally {
-      performance.mark('fetchAlbums-end');
-      performance.measure('fetchAlbums', 'fetchAlbums-start', 'fetchAlbums-end');
-      const measure = performance.getEntriesByName('fetchAlbums')[0];
-      console.log(`fetchAlbums took ${measure.duration}ms`);
-      performance.clearMarks('fetchAlbums-start');
-      performance.clearMarks('fetchAlbums-end');
-      performance.clearMeasures('fetchAlbums');
-    }
+  // Debounce function to limit the rate of function execution
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
   };
 
-  const fetchPhotos = async () => {
-    performance.mark('fetchPhotos-start');
-    try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=${postLimit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch photos');
-      }
-      const newData = await response.json();
-      setPhotos(newData);
-    } catch (error) {
-      console.error("Error caught: ", error.message);
-      showErrorNotification(error.message);
-    } finally {
-      performance.mark('fetchPhotos-end');
-      performance.measure('fetchPhotos', 'fetchPhotos-start', 'fetchPhotos-end');
-      const measure = performance.getEntriesByName('fetchPhotos')[0];
-      console.log(`fetchPhotos took ${measure.duration}ms`);
-      performance.clearMarks('fetchPhotos-start');
-      performance.clearMarks('fetchPhotos-end');
-      performance.clearMeasures('fetchPhotos');
-    }
-  };
+  // Handlers for changing the limits and filter settings with debounce
+  const handlePostLimitChange = debounce((e) => {
+    setPostLimit(parseInt(e.target.value));
+  }, 300);
 
-  const handleFetchPosts = async () => {
-    setShowPosts(true);
-    setShowComments(false);
-    setShowAlbums(false);
-    setShowPhotos(false);
-  };
+  const handleMinCharCountChange = debounce((e) => {
+    setMinCharCount(parseInt(e.target.value));
+  }, 300);
 
-  const handleFetchComments = async () => {
-    setShowPosts(false);
-    setShowComments(true);
-    setShowAlbums(false);
-    setShowPhotos(false);
-  };
+  const handleMaxCharCountChange = debounce((e) => {
+    setMaxCharCount(parseInt(e.target.value));
+  }, 300);
 
-  const handleFetchAlbums = async () => {
-    setShowPosts(false);
-    setShowComments(false);
-    setShowAlbums(true);
-    setShowPhotos(false);
-  };
-
-  const handleFetchPhotos = async () => {
-    setShowPosts(false);
-    setShowComments(false);
-    setShowAlbums(false);
-    setShowPhotos(true);
-  };
-
-  const handlePostLimitChange = (e) => {
-    const newPostLimit = parseInt(e.target.value);
-    setPostLimit(newPostLimit);
-  };
-
-  const handleMinCharCountChange = (e) => {
-    const newMinCharCount = parseInt(e.target.value);
-    setMinCharCount(newMinCharCount);
-  };
-
-  const handleMaxCharCountChange = (e) => {
-    const newMaxCharCount = parseInt(e.target.value);
-    setMaxCharCount(newMaxCharCount);
-  };
-
-  const showErrorNotification = (errorMessage) => {
-    NotificationManager.error(errorMessage, 'Error', 5000);
-  };
   return (
       <div className="App">
         <header className="App-header">
@@ -188,7 +121,7 @@ function App() {
               <input
                   type="number"
                   id="postLimit"
-                  value={postLimit}
+                  defaultValue={postLimit}
                   onChange={handlePostLimitChange}
               />
             </div>
@@ -197,7 +130,7 @@ function App() {
               <input
                   type="number"
                   id="minCharCount"
-                  value={minCharCount}
+                  defaultValue={minCharCount}
                   onChange={handleMinCharCountChange}
               />
             </div>
@@ -206,21 +139,21 @@ function App() {
               <input
                   type="number"
                   id="maxCharCount"
-                  value={maxCharCount}
+                  defaultValue={maxCharCount}
                   onChange={handleMaxCharCountChange}
               />
             </div>
           </div>
           <div className="buttons-container">
-            <button onClick={handleFetchPosts}>Display posts</button>
-            <button onClick={handleFetchComments}>Display comments</button>
-            <button onClick={handleFetchAlbums}>Display albums</button>
-            <button onClick={handleFetchPhotos}>Display photos</button>
+            <button onClick={() => handleViewChange('posts')}>Display posts</button>
+            <button onClick={() => handleViewChange('comments')}>Display comments</button>
+            <button onClick={() => handleViewChange('albums')}>Display albums</button>
+            <button onClick={() => handleViewChange('photos')}>Display photos</button>
           </div>
         </header>
 
         <div className="content-area">
-          {showPosts && (
+          {currentView === 'posts' && posts.length > 0 && (
               <div className="table-area">
                 <p>Posts:</p>
                 <table className="post-table">
@@ -243,7 +176,7 @@ function App() {
                 </table>
               </div>
           )}
-          {showComments && comments.length > 0 && (
+          {currentView === 'comments' && comments.length > 0 && (
               <div className="table-area">
                 <p>Comments:</p>
                 <table className="comment-table">
@@ -270,7 +203,7 @@ function App() {
                 </table>
               </div>
           )}
-          {showAlbums && albums.length > 0 && (
+          {currentView === 'albums' && albums.length > 0 && (
               <div className="table-area">
                 <p>Albums:</p>
                 <table className="album-table">
@@ -293,7 +226,7 @@ function App() {
                 </table>
               </div>
           )}
-          {showPhotos && photos.length > 0 && (
+          {currentView === 'photos' && photos.length > 0 && (
               <div className="table-area">
                 <p>Photos:</p>
                 <table className="photo-table">
@@ -311,7 +244,9 @@ function App() {
                         <td>{photo.id}</td>
                         <td>{photo.albumId}</td>
                         <td>{photo.title}</td>
-                        <td><img src={photo.thumbnailUrl} alt={`Photo ${photo.id}`}/></td>
+                        <td>
+                          <img src={photo.thumbnailUrl} alt={`${photo.title}`} />
+                        </td>
                       </tr>
                   ))}
                   </tbody>
@@ -322,6 +257,6 @@ function App() {
         <NotificationContainer />
       </div>
   );
-}
+};
 
 export default App;
